@@ -241,32 +241,22 @@ class GoodShortProvider : MainAPI() {
         return tryParseJson<Map<*, *>>(match.groupValues[1])
     }
 
-    /** Safely navigate nested maps */
+    /** Safely navigate nested Map chain */
     private fun getNestedMap(root: Map<*, *>?, vararg keys: String): Map<*, *>? {
         var current: Map<*, *>? = root
-        for (key in keys) {
-            current = current?.get(key) as? Map<*, *> ?: return null
-        }
-        return current
-    }
-
-    private fun getNestedMap(state: Map<*, *>?, vararg keys: String): Map<*, *>? {
-        var current: Map<*, *>? = state
         for (key in keys) {
             current = (current?.get(key) as? Map<*, *>) ?: return null
         }
         return current
     }
 
+    /** Safely navigate to a List at the end of a nested Map chain */
     private fun getNestedList(root: Map<*, *>?, vararg keys: String): List<*> {
         if (keys.isEmpty()) return emptyList<Any>()
-        val lastKey = keys.last()
-        val parentKeys = keys.dropLast(1)
-        var current: Map<*, *>? = root
-        for (key in parentKeys) {
-            current = (current?.get(key) as? Map<*, *>) ?: return emptyList<Any>()
-        }
-        return current?.get(lastKey) as? List<*> ?: emptyList<Any>()
+        val parentKeys = keys.dropLast(1).toTypedArray()
+        val lastKey    = keys.last()
+        val parent     = if (parentKeys.isEmpty()) root else getNestedMap(root, *parentKeys)
+        return parent?.get(lastKey) as? List<*> ?: emptyList<Any>()
     }
 
     /** Convert a raw book map to a CloudStream SearchResponse */
